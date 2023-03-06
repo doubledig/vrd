@@ -1,0 +1,6 @@
+### JetBrains template
+.idea/
+
+### User setting
+data/*
+!data/data.md
