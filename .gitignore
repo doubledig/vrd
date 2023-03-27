@@ -3,4 +3,5 @@
 
 ### User setting
 data/*
+log/
 !data/data.md
