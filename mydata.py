@@ -144,5 +144,43 @@ class MyModuleDataset(torch.utils.data.Dataset):
         return len(self.data)
 
 
+class TestDataset(torch.utils.data.Dataset):
+
+    def __init__(self, root: str,
+                 device=None) -> None:
+        root = os.path.expanduser(root)
+        self.root = root
+        if device is None:
+            torch.device('cpu')
+        else:
+            self.device = device
+        with open(os.path.join(self.root, 'annotations_test.json')) as f:
+            self.ann = json.load(f)
+        self.ids = list(self.ann.keys())
+
+    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+        path = os.path.join(self.root, 'test', self.ids[index])
+        image = torchvision.io.read_image(path, mode=torchvision.io.ImageReadMode.RGB).to(self.device)
+        target = []
+        for t in self.ann[self.ids[index]]:
+            l0 = [t['object']['category'] + 1, t['object']['bbox'][2], t['object']['bbox'][0],
+                  t['object']['bbox'][3], t['object']['bbox'][1], t['subject']['category'] + 1,
+                  t['subject']['bbox'][2], t['subject']['bbox'][0], t['subject']['bbox'][3],
+                  t['subject']['bbox'][1], t['predicate']]
+            target.append(l0)
+        # 数据预处理
+        transform = transforms.Compose(
+            [
+                transforms.ToImageTensor(),
+                transforms.ConvertImageDtype(torch.float32)
+            ]
+        )
+        image = transform(image)
+        return image, target
+
+    def __len__(self):
+        return len(self.ids)
+
+
 def collate_fn(batch):
     return list(zip(*batch))
